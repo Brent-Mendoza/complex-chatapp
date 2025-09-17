@@ -16,7 +16,12 @@ app.use(cookieParser())
 app.use("api/v1/auth", authRouter)
 app.use("api/v1/messages", messageRouter)
 
-app.listen(PORT, () => {
-  console.log("Server started on port " + PORT)
-  connectDB()
-})
+try {
+  await connectDB()
+  app.listen(PORT, () => {
+    console.log("Server started on port " + PORT)
+  })
+} catch (error) {
+  console.error(error)
+  process.exit(1)
+}

@@ -1,6 +1,8 @@
 import User from "../models/User.js"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
+import { sendWelcomeEmail } from "../emails/emailHandler.js"
+import "dotenv/config"
 
 export const signup = async (req, res) => {
   const { fullName, email, password } = req.body
@@ -34,7 +36,7 @@ export const signup = async (req, res) => {
       const token = jwt.sign({ userId: newUser._id }, process.env.SECRET_KEY, {
         expiresIn: "1d",
       })
-      await newUser.save()
+      const savedUser = await newUser.save()
 
       res.cookie("jwt", token, {
         httpOnly: true,
@@ -42,12 +44,22 @@ export const signup = async (req, res) => {
         sameSite: "strict",
         maxAge: 24 * 60 * 60 * 1000,
       })
-      res.status(200).json({
+      res.status(201).json({
         message: "User created successfully",
-        _id: user._id,
-        fullName: user.fullName,
-        email: user.email,
+        _id: savedUser._id,
+        fullName: savedUser.fullName,
+        email: savedUser.email,
       })
+
+      try {
+        await sendWelcomeEmail(
+          savedUser.email,
+          savedUser.fullName,
+          process.env.CLIENT_URL
+        )
+      } catch (error) {
+        console.error(error)
+      }
     } else {
       res.status(400).json({ message: "Invalid user data" })
     }

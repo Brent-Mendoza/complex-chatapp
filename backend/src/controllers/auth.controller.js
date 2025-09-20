@@ -115,24 +115,36 @@ export const logout = async (_, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { profilePic } = req.body
-    if (!profilePic)
+    if (!req.file) {
       return res
         .status(400)
         .json({ message: "Please upload a profile picture" })
-    const user = req.user._id
+    }
 
-    const uploadResponse = await cloudinary.uploader.upload(profilePic)
-    const updatedUser = await User.findByIdAndUpdate(
-      user,
-      { profilePic: uploadResponse.secure_url },
-      { new: true }
-    ).select("-password")
+    // Upload buffer to Cloudinary
+    const uploadResponse = await cloudinary.uploader.upload_stream(
+      { resource_type: "image" },
+      async (error, result) => {
+        if (error) {
+          console.error(error)
+          return res.status(500).json({ message: "Cloudinary upload failed" })
+        }
 
-    res.status(200).json({
-      message: "Profile picture updated successfully",
-      user: updatedUser,
-    })
+        const updatedUser = await User.findByIdAndUpdate(
+          req.user._id,
+          { profilePic: result.secure_url },
+          { new: true }
+        ).select("-password")
+
+        return res.status(200).json({
+          message: "Profile picture updated successfully",
+          user: updatedUser,
+        })
+      }
+    )
+
+    // Write the file buffer to the stream
+    uploadResponse.end(req.file.buffer)
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: "Something went wrong" })

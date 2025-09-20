@@ -109,7 +109,7 @@ export const login = async (req, res) => {
 }
 
 export const logout = async (_, res) => {
-  res.cookies("jwt", "", { maxAge: 0 })
+  res.cookie("jwt", "", { maxAge: 0 })
   res.status(200).json({ message: "User logged out successfully" })
 }
 
@@ -129,12 +129,10 @@ export const updateProfile = async (req, res) => {
       { new: true }
     ).select("-password")
 
-    res
-      .status(200)
-      .json({
-        message: "Profile picture updated successfully",
-        user: updatedUser,
-      })
+    res.status(200).json({
+      message: "Profile picture updated successfully",
+      user: updatedUser,
+    })
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: "Something went wrong" })

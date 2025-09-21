@@ -35,11 +35,11 @@ export const getMessageByUserId = async (req, res) => {
 
 export const sendMessage = async (req, res) => {
   try {
-    const { text, image } = req.body
+    const { text } = req.body
     const { id } = req.params
     const senderId = req.user._id
 
-    if (!text && !image)
+    if (!text && !req.file)
       return res.status(400).json({ message: "Please fill all the fields" })
 
     if (senderId.equals(id))
@@ -52,9 +52,19 @@ export const sendMessage = async (req, res) => {
       return res.status(404).json({ message: "Receiver does not exist" })
 
     let imageUrl
-    if (image) {
-      const uploadResponse = await cloudinary.uploader.upload(image)
-      imageUrl = uploadResponse.secure_url
+    if (req.file) {
+      // Upload buffer to Cloudinary
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { resource_type: "image" },
+          (error, result) => {
+            if (error) reject(error)
+            else resolve(result)
+          }
+        )
+        stream.end(req.file.buffer)
+      })
+      imageUrl = result.secure_url
     }
 
     const newMessage = new Message({

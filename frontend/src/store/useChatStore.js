@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import axiosClient from "../lib/axios"
 import toast from "react-hot-toast"
+import { useAuthStore } from "./useAuthStore"
 
 export const useChatStore = create((set, get) => ({
   allContacts: [],
@@ -60,6 +61,38 @@ export const useChatStore = create((set, get) => ({
       )
     } finally {
       set({ isMessagesLoading: false })
+    }
+  },
+
+  sendMessage: async (messageData) => {
+    const { selectedUser, messages } = get()
+    const { authUser } = useAuthStore.getState()
+
+    const tempId = `temp-${Date.now()}`
+
+    const optimisticMessage = {
+      _id: tempId,
+      senderId: authUser._id,
+      receiverId: selectedUser._id,
+      text: messageData.text,
+      image: messageData.image,
+      createdAt: new Date().toISOString(),
+      isOptimistic: true,
+    }
+    set({ messages: [...messages, optimisticMessage] })
+    try {
+      const res = await axiosClient.post(
+        `/messages/send/${selectedUser._id}`,
+        messageData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      )
+      set({ messages: messages.concat(res.data) })
+    } catch (error) {
+      set({ messages: messages })
+      toast.error(
+        error?.response?.data?.message ||
+          "Something happened. Please try again!"
+      )
     }
   },
 }))

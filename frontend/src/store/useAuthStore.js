@@ -27,7 +27,10 @@ export const useAuthStore = create((set, get) => ({
       toast.success("Account created successfully")
     } catch (error) {
       console.log(error)
-      toast.error(error.response.data.message)
+      toast.error(
+        error?.response?.data?.message ||
+          "Something happened. Please try again!"
+      )
     } finally {
       set({ isSigningUp: false })
     }
@@ -41,7 +44,10 @@ export const useAuthStore = create((set, get) => ({
       toast.success("Logged in successfully")
     } catch (error) {
       console.log(error)
-      toast.error(error.response.data.message)
+      toast.error(
+        error?.response?.data?.message ||
+          "Something happened. Please try again!"
+      )
     } finally {
       set({ isLoggingIn: false })
     }
@@ -70,7 +76,7 @@ export const useAuthStore = create((set, get) => ({
     } catch (error) {
       console.log(error)
       toast.error(
-        error.data?.response?.message ||
+        error?.data?.response?.message ||
           "Something happened. Please try again later!"
       )
     } finally {

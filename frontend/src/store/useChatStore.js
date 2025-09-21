@@ -25,7 +25,10 @@ export const useChatStore = create((set, get) => ({
       const res = await axiosClient.get("/messages/contacts")
       set({ allContacts: res.data })
     } catch (error) {
-      toast.error(error.response.data.message)
+      toast.error(
+        error?.response?.data?.message ||
+          "Something happened. Please try again!"
+      )
     } finally {
       set({ isUsersLoading: false })
     }
@@ -36,7 +39,25 @@ export const useChatStore = create((set, get) => ({
       const res = await axiosClient.get("/messages/chats")
       set({ chats: res.data })
     } catch (error) {
-      toast.error(error.response.data.message)
+      toast.error(
+        error?.response?.data?.message ||
+          "Something happened. Please try again!"
+      )
+    } finally {
+      set({ isMessagesLoading: false })
+    }
+  },
+
+  getMessagesByUserId: async (userId) => {
+    set({ isMessagesLoading: true })
+    try {
+      const res = await axiosClient.get(`/messages/${userId}`)
+      set({ messages: res.data })
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message ||
+          "Something happened. Please try again!"
+      )
     } finally {
       set({ isMessagesLoading: false })
     }
